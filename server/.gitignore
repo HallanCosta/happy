@@ -1,0 +1,5 @@
+node_modules
+
+# Uploads folder
+uploads/*.jpeg
+uploads/*.jpg
