@@ -4,6 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { RectButton } from 'react-native-gesture-handler';
 import { useRoute } from '@react-navigation/native';
+import ShimmerPlaceHolder from 'react-native-shimmer-placeholder';
 
 import mapMarkerImg from '../images/map-marker.png';
 import { api } from '../services/api';
@@ -26,56 +27,85 @@ type Orphanage = {
   instructions: string;
   opening_hours: string;
   open_on_weekends: boolean;
-  images: OrphanageImage[]
+  images: OrphanageImage[];
 }
 
 export const OrphanageDetails = () => {
   const route = useRoute();
 
-  const [orphanage, setOrphanage] = useState<Orphanage>();
+  const [orphanage, setOrphanage] = useState<Orphanage>({
+    id: 0,
+    name: '',
+    latitude: 0,
+    longitude: 0,
+    about: '',
+    instructions: '',
+    opening_hours: '',
+    open_on_weekends: false,
+    images: [{
+      id: 0,
+      url: ''
+    }]
+  });
+
+  const [orphanageVisible, setOrphanageVisible] = useState(false);
 
   const params = route.params as OrphanageDetailsRouteParams;
 
   useEffect(() => {
     api.get(`orphanages/${params.id}`).then(response => {
       setOrphanage(response.data);
+      setOrphanageVisible(true);
     });
   }, [params.id]);
-
-  if (!orphanage) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.description}>Carregando...</Text>
-      </View>
-    );
-  }
 
   function handleOpenGoogleMapsRoutes() {
     Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${orphanage?.latitude},${orphanage?.longitude}`);
   }
 
-  
-
   return (
+    
     <ScrollView style={styles.container}>
       <View style={styles.imagesContainer}>
-        <ScrollView horizontal pagingEnabled>
-          {orphanage.images.map(image => {
-            return (
-              <Image 
-                key={image.id}
-                style={styles.image} 
-                source={{ uri: image.url }} 
-              />
-            );
-          })}
-        </ScrollView>
-      </View>
 
+          <ScrollView horizontal pagingEnabled>
+            { orphanage.images.map(image => {
+              return (
+                <ShimmerPlaceHolder
+                  key={image.id}
+                  style={styles.image} 
+                  stopAutoRun={false}
+                  visible={orphanageVisible}
+                >
+                  <Image
+                    style={styles.image} 
+                    source={{ uri: image.url || undefined }} 
+                  />
+                </ShimmerPlaceHolder>
+              );
+            })}
+          </ScrollView>
+
+      </View>
+        
       <View style={styles.detailsContainer}>
-        <Text style={styles.title}>{orphanage.name}</Text>
-        <Text style={styles.description}>{orphanage.about}</Text>
+        <ShimmerPlaceHolder
+          style={styles.title} 
+          stopAutoRun={false}
+          visible={orphanageVisible}
+        >
+          <Text style={styles.title}>{orphanage.name}</Text>
+        </ShimmerPlaceHolder>
+
+        <ShimmerPlaceHolder
+          style={styles.description} 
+          stopAutoRun={false}
+          visible={orphanageVisible}
+        >
+          <Text style={styles.description}>{orphanage.about}</Text>
+        </ShimmerPlaceHolder>
       
+        
         <View style={styles.mapContainer}>
           <MapView 
             initialRegion={{
@@ -103,29 +133,49 @@ export const OrphanageDetails = () => {
             <Text style={styles.routesText}>Ver rotas no Google Maps</Text>
           </TouchableOpacity>
         </View>
+        
       
         <View style={styles.separator} />
 
         <Text style={styles.title}>Instruções para visita</Text>
-        <Text style={styles.description}>{orphanage.instructions}</Text>
+
+        <ShimmerPlaceHolder
+          style={styles.description}
+          stopAutoRun={false}
+          visible={orphanageVisible}
+        >
+          <Text style={styles.description}>{orphanage.instructions}</Text>
+        </ShimmerPlaceHolder>
 
         <View style={styles.scheduleContainer}>
-          <View style={[styles.scheduleItem, styles.scheduleItemBlue]}>
+          
+          <ShimmerPlaceHolder 
+            style={[styles.scheduleItem, styles.scheduleItemBlue]}
+            stopAutoRun={false}
+            visible={orphanageVisible}
+          >
             <Feather name="clock" size={40} color="#2AB5D1" />
             <Text style={[styles.scheduleText, styles.scheduleTextBlue]}>Segunda à Sexta {orphanage.opening_hours}</Text>
-          </View>
-
+          </ShimmerPlaceHolder>
 
           {orphanage.open_on_weekends ? (
-            <View style={[styles.scheduleItem, styles.scheduleItemGreen]}>
+            <ShimmerPlaceHolder 
+              style={[styles.scheduleItem, styles.scheduleItemGreen]}
+              stopAutoRun={false}
+              visible={orphanageVisible}
+            >
               <Feather name="info" size={40} color="#39CC83" />
               <Text style={[styles.scheduleText, styles.scheduleTextGreen]}>Atendemos fim de semana</Text>
-            </View>
+            </ShimmerPlaceHolder>
           ) : (
-            <View style={[styles.scheduleItem, styles.scheduleItemRed]}>
+            <ShimmerPlaceHolder 
+              style={[styles.scheduleItem, styles.scheduleItemRed]}
+              stopAutoRun={false}
+              visible={orphanageVisible}
+            >
               <Feather name="info" size={40} color="#FF669D" />
               <Text style={[styles.scheduleText, styles.scheduleTextRed]}>Não atendemos fim de semana</Text>
-            </View>
+            </ShimmerPlaceHolder>
           )}
         </View>
 
@@ -133,6 +183,7 @@ export const OrphanageDetails = () => {
           <FontAwesome name="whatsapp" size={24} color="#FFF" />
           <Text style={styles.contactButtonText}>Entrar em contato</Text>
         </RectButton> */}
+
       </View>
     </ScrollView>
   )
